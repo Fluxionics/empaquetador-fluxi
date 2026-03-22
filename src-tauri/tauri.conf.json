@@ -1,0 +1,54 @@
+{
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "../src",
+    "distDir": "../src"
+  },
+  "package": {
+    "productName": "Fluxi",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": { "all": false, "open": true },
+      "dialog": {
+        "all": false,
+        "open": true,
+        "save": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["**"]
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": ["msi", "nsis"],
+      "identifier": "com.fluxionics.fluxi",
+      "icon": ["icons/icon.png"],
+      "copyright": "© 2025 Fluxionics",
+      "longDescription": "Empaquetador portable de aplicaciones por Fluxionics",
+      "shortDescription": "Empaquetador portable",
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "security": { "csp": null },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "Fluxi — by Fluxionics",
+        "width": 960,
+        "height": 640,
+        "minWidth": 860,
+        "minHeight": 600,
+        "center": true
+      }
+    ]
+  }
+}

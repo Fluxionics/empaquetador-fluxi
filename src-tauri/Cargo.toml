@@ -1,0 +1,22 @@
+[package]
+name = "fluxi"
+version = "1.0.0"
+description = "Fluxi — Empaquetador portable por Fluxionics"
+authors = ["Fluxionics"]
+license = "Apache-2.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.6", features = ["dialog-all", "fs-all", "shell-open"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+zip = "0.6"
+walkdir = "2.4"
+anyhow = "1.0"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

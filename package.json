@@ -1,0 +1,18 @@
+{
+  "name": "fluxi",
+  "version": "1.0.0",
+  "description": "Empaquetador portable por Fluxionics",
+  "author": "Fluxionics",
+  "license": "Apache-2.0",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.0"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1.6.0"
+  }
+}

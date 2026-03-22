@@ -1,0 +1,8 @@
+node_modules/
+target/
+dist/
+src-tauri/target/
+*.tmp
+*.fluxi.tmp
+.DS_Store
+Thumbs.db
