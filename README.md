@@ -6,79 +6,113 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Rust%20%2B%20Tauri%20%2B%20HTML-orange)
+![Platform](https://img.shields.io/badge/platform-Windows-informational)
+![ZIP64](https://img.shields.io/badge/ZIP64-32GB%2B-success)
 
 ---
 
-## ⚙️ Requisitos antes de correrlo
+## ¿Qué es Fluxi?
 
-Necesitas instalar estas herramientas **una sola vez**:
-
-### 1. Rust
-```bash
-# Windows — abre PowerShell y ejecuta:
-winget install Rustlang.Rustup
-
-# O descarga directo:
-# https://rustup.rs/
-```
-
-Verifica con:
-```bash
-rustc --version
-cargo --version
-```
+**Fluxi** es una herramienta open source creada por **Fluxionics** que convierte cualquier programa, instalador o conjunto de archivos en **un único archivo `.exe` portable** — sin carpetas ocultas, sin instalación, sin rastros.
 
 ---
 
-### 2. Node.js (v18 o superior)
-Descarga desde: https://nodejs.org/
+## ✨ Características
 
-Verifica con:
-```bash
-node --version
-npm --version
-```
+- 📦 Empaqueta cualquier archivo o carpeta en un único `.exe`
+- 🚀 Motor streaming — soporta **32GB+** sin congelarse ni usar RAM
+- 🔐 Contraseña de protección al ejecutar
+- 🔒 Cifrado del payload
+- 📂 Extractor integrado — desempaqueta cualquier `.fluxi.exe`
+- 🎨 UI pixel art con tema claro/oscuro
+- 🖼️ Ícono personalizado para el `.exe` generado
+- 📊 Progreso en tiempo real archivo por archivo
+- 🆓 100% Open Source — Apache 2.0
 
 ---
 
-### 3. Dependencias de sistema para Tauri (Windows)
+## 🛠️ Stack tecnológico
 
-Instala las **WebView2 Runtime** (necesario para Tauri en Windows):
-- Descarga: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+| Capa | Tecnología |
+|------|-----------|
+| Interfaz | HTML + CSS + JS (pixel art) |
+| Backend | Rust |
+| Bridge | Tauri v1 |
+| Compresión | ZIP64 / Deflate |
 
-También necesitas **Microsoft C++ Build Tools**:
-- Descarga: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+---
+
+## 📥 Instalación para desarrollo
+
+### Requisitos
+
+**1. Rust**
+```bash
+# Descarga desde https://rustup.rs/
+rustc --version  # verificar
+```
+
+**2. Node.js v18+**
+```bash
+# Descarga desde https://nodejs.org/
+node --version   # verificar
+```
+
+**3. WebView2 Runtime (Windows)**
+- Descarga el `Evergreen Bootstrapper` desde:
+- https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+
+**4. Microsoft C++ Build Tools**
+- https://visualstudio.microsoft.com/visual-cpp-build-tools/
 - Selecciona: `Desktop development with C++`
 
 ---
 
-## 🚀 Cómo correr Fluxi
+## 🚀 Correr en desarrollo
 
-### Paso 1 — Clona el repositorio
 ```bash
-git clone https://github.com/fluxionics/fluxi.git
-cd fluxi
-```
-
-### Paso 2 — Instala dependencias de Node
-```bash
+git clone https://github.com/fluxionics/empaquetador-fluxi.git
+cd empaquetador-fluxi
 npm install
-```
-
-### Paso 3 — Modo desarrollo (para probar)
-```bash
 npm run dev
 ```
-Esto abre la ventana de Fluxi en modo desarrollo con recarga automática.
 
-### Paso 4 — Compilar versión final
+---
+
+## 📦 Compilar release
+
 ```bash
+# Genera instalador .msi y .exe en Windows
 npm run build
 ```
-El instalador `.msi` y el `.exe` compilado estarán en:
+
+El resultado estará en:
 ```
 src-tauri/target/release/bundle/
+├── msi/    ← Fluxi_1.0.0_x64_en-US.msi
+└── nsis/   ← Fluxi_1.0.0_x64-setup.exe
 ```
+
+> **Nota:** El `.dmg` para Mac solo se puede compilar desde una Mac.
+
+---
+
+## 🎯 Cómo usar Fluxi
+
+1. Abre Fluxi
+2. Arrastra tus archivos o usa los botones para seleccionarlos
+3. Selecciona el **archivo principal** (entry point)
+4. Opcionalmente: agrega ícono, contraseña o cifrado
+5. Presiona **[ EMPAQUETAR ]**
+6. Elige dónde guardar el `.exe` portable
+7. ¡Listo! Un único `.exe` para compartir
+
+### Extraer un .fluxi.exe
+1. Ve a la pestaña **[ EXTRAER ]**
+2. Selecciona el `.exe` empaquetado
+3. Elige carpeta de destino
+4. Ingresa contraseña si aplica
+5. Presiona **[ EXTRAER ARCHIVOS ]**
 
 ---
 
@@ -87,54 +121,58 @@ src-tauri/target/release/bundle/
 ```
 fluxi/
 ├── src/
-│   └── index.html          ← Interfaz (HTML + CSS + JS)
+│   └── index.html              ← UI pixel art completa
 ├── src-tauri/
 │   ├── src/
-│   │   ├── main.rs         ← Entrada Rust + Tauri
-│   │   └── packer.rs       ← Motor de empaquetado real
+│   │   ├── main.rs             ← Entrada Rust + Tauri
+│   │   ├── packer.rs           ← Motor de empaquetado ZIP64
+│   │   └── extractor.rs        ← Desempaquetador
+│   ├── icons/
+│   │   ├── icon.ico
+│   │   ├── icon.png
+│   │   └── logotipo.png        ← Logo Fluxionics
 │   ├── build.rs
-│   ├── Cargo.toml          ← Dependencias Rust
-│   └── tauri.conf.json     ← Configuración Tauri
-├── package.json
-├── LICENSE                 ← Apache 2.0
+│   ├── Cargo.toml
+│   └── tauri.conf.json
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── LICENSE                     ← Apache 2.0
 └── README.md
 ```
-
----
-
-## 🎯 Cómo usar Fluxi
-
-1. Abre Fluxi
-2. Arrastra tus archivos o usa los botones para seleccionarlos
-3. Selecciona el **archivo principal** (el que se ejecuta al abrir)
-4. Llena el nombre de la app y versión
-5. Presiona **⚡ Empaquetar**
-6. Obtén tu `.exe` portable listo para compartir
 
 ---
 
 ## 🗺️ Roadmap
 
 - [x] v0.0.1 — Estructura base
-- [x] v1.0.0 — Motor de empaquetado funcional + UI completa
-- [ ] v1.1.0 — Ícono personalizado para el .exe generado
-- [ ] v1.2.0 — Firma digital con certificado
-- [ ] v1.3.0 — Soporte para Mac y Linux
+- [x] v1.0.0 — Motor streaming ZIP64, UI pixel art, extractor, contraseña
+- [ ] v1.1.0 — Firma digital del `.exe` generado
+- [ ] v1.2.0 — Soporte Mac/Linux
+- [ ] v1.3.0 — CLI (línea de comandos)
 
 ---
 
 ## 🐛 Problemas comunes
 
-**Error: `tauri` command not found**
+**`tauri` command not found**
 ```bash
-npm install  # Asegúrate de haber corrido esto primero
+npm install
 ```
 
-**Error de compilación en Windows con C++**
-- Instala Microsoft C++ Build Tools (ver requisitos arriba)
+**Error de compilación C++**
+Instala Microsoft C++ Build Tools (ver requisitos)
 
 **La ventana no abre**
-- Verifica que tienes WebView2 Runtime instalado
+Verifica WebView2 Runtime instalado
+
+**Archivo muy grande (>4GB individual)**
+ZIP64 está activado por defecto — debería funcionar automáticamente
+
+---
+
+## 🤝 Contribuir
+
+Lee [CONTRIBUTING.md](CONTRIBUTING.md) para guía de contribución.
 
 ---
 
