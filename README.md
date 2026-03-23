@@ -72,7 +72,8 @@ Si tienes un `.exe` empaquetado con Fluxi y quieres recuperar los archivos origi
 
 Si quieres compilar Fluxi desde el código fuente, consulta [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+**¿Puedo empaquetar juegos grandes?**  
+Sí, Fluxi soporta proyectos de 32GB o más sin problema.
 
 ## ❓ Preguntas frecuentes
 
@@ -94,5 +95,4 @@ Sí, usa la pestaña **[ EXTRAER ]** dentro de Fluxi.
 
 Apache 2.0 © 2025 **Fluxionics**
 
-> "Fluxi" y "Fluxionics" son marcas de Fluxionics.  
-> No uses estos nombres en productos derivados sin permiso.
+> "Fluxi" y "Fluxionics" son marcas de Fluxionics.
