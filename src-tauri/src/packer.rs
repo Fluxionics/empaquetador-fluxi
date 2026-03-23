@@ -242,7 +242,7 @@ fn zip_add_file(
 fn zip_add_dir(
     zip: &mut ZipWriter<std::io::Cursor<Vec<u8>>>,
     dir: &Path,
-    base: &str,
+    _base: &str,
     options: FileOptions,
 ) -> anyhow::Result<()> {
     for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {

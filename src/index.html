@@ -208,11 +208,11 @@
             <div class="stat-lbl">MB origen</div>
           </div>
           <div class="stat">
-            <div class="stat-val" id="stEstimated">0</div>
+            <div class="stat-val" id="stEst">0</div>
             <div class="stat-lbl">MB estimado</div>
           </div>
           <div class="stat">
-            <div class="stat-val" id="stFinalSize">—</div>
+            <div class="stat-val" id="stFinal">—</div>
             <div class="stat-lbl">MB final</div>
           </div>
         </div>
@@ -246,185 +246,176 @@
   import { open, save } from 'https://unpkg.com/@tauri-apps/api@1/dialog';
   import { listen } from 'https://unpkg.com/@tauri-apps/api@1/event';
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  // ── State
+  let files = [];
 
-    const dropzone    = document.getElementById('dropzone');
-    const fileList    = document.getElementById('fileList');
-    const entrySelect = document.getElementById('entrySelect');
-    const packBtn     = document.getElementById('packBtn');
-    const logBox      = document.getElementById('logBox');
+  // ── Elements (acceder después del DOM)
+  const $ = id => document.getElementById(id);
 
-    let files = [];
+  // ── Escuchar progreso real desde Rust
+  listen('pack_progress', (event) => {
+    const { percent, message, current_file } = event.payload;
+    $('progBar').style.width = percent + '%';
+    $('progMsg').textContent = message;
+    addLog(message + (current_file ? ' — ' + current_file : ''), 'inf');
+  });
 
-    // ── Escuchar progreso real desde Rust
-    await listen('pack_progress', (event) => {
-      const { percent, message, current_file } = event.payload;
-      document.getElementById('progBar').style.width = percent + '%';
-      document.getElementById('progMsg').textContent = message;
-      if (current_file) log('▸ ' + message + (current_file ? ' — ' + current_file : ''), 'inf');
-    });
+  // ── Drag & Drop
+  $('dropzone').addEventListener('dragover',  e => { e.preventDefault(); $('dropzone').classList.add('over'); });
+  $('dropzone').addEventListener('dragleave', () => $('dropzone').classList.remove('over'));
+  $('dropzone').addEventListener('drop', async e => {
+    e.preventDefault();
+    $('dropzone').classList.remove('over');
+    for (const f of Array.from(e.dataTransfer.files)) {
+      await addEntry({ name: f.name, path: f.path, size: f.size });
+    }
+    render();
+  });
 
-    // ── Bind botones
-    document.getElementById('btnFiles').addEventListener('click', pickFiles);
-    document.getElementById('btnFolder').addEventListener('click', pickFolder);
-    packBtn.addEventListener('click', startPack);
+  // ── Botones
+  $('btnFiles').addEventListener('click', pickFiles);
+  $('btnFolder').addEventListener('click', pickFolder);
+  $('packBtn').addEventListener('click', startPack);
 
-    // ── Drag & Drop
-    dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('over'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
-    dropzone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropzone.classList.remove('over');
-      for (const f of Array.from(e.dataTransfer.files)) {
-        await addEntry({ name: f.name, path: f.path, size: f.size });
+  async function pickFiles() {
+    try {
+      const selected = await open({ multiple: true, title: 'Seleccionar archivos' });
+      if (!selected) return;
+      const paths = Array.isArray(selected) ? selected : [selected];
+      for (const p of paths) {
+        const name = p.replace(/\\/g, '/').split('/').pop();
+        await addEntry({ name, path: p, size: 0 });
       }
       render();
-    });
+    } catch (e) { addLog('Error: ' + e, 'err'); }
+  }
 
-    async function pickFiles() {
-      try {
-        const selected = await open({ multiple: true, title: 'Seleccionar archivos' });
-        if (!selected) return;
-        const paths = Array.isArray(selected) ? selected : [selected];
-        for (const p of paths) {
-          const name = p.replace(/\\/g, '/').split('/').pop();
-          await addEntry({ name, path: p, size: 0 });
+  async function pickFolder() {
+    try {
+      const selected = await open({ directory: true, multiple: false, title: 'Seleccionar carpeta' });
+      if (!selected) return;
+      const name = selected.replace(/\\/g, '/').split('/').pop();
+      await addEntry({ name: name + '/', path: selected, size: 0, isDir: true });
+      render();
+    } catch (e) { addLog('Error: ' + e, 'err'); }
+  }
+
+  async function addEntry(entry) {
+    if (files.find(x => x.path === entry.path)) return;
+    try {
+      entry.size = await invoke('get_file_size', { path: entry.path });
+    } catch(_) { entry.size = 0; }
+    files.push(entry);
+    addLog('Añadido: ' + entry.name + ' (' + fmtSize(entry.size) + ')', 'inf');
+  }
+
+  window.removeFile = function(i) {
+    addLog('Eliminado: ' + files[i].name, 'wrn');
+    files.splice(i, 1);
+    render();
+  };
+
+  function render() {
+    const fileList    = $('fileList');
+    const entrySelect = $('entrySelect');
+    const packBtn     = $('packBtn');
+
+    if (files.length === 0) {
+      fileList.innerHTML = '<div class="empty-state">Sin archivos todavía...</div>';
+      entrySelect.innerHTML = '<option value="">— ¿Qué archivo se ejecuta primero? —</option>';
+    } else {
+      fileList.innerHTML = files.map((f, i) =>
+        '<div class="file-row">' +
+        '<span class="ext-badge">' + (f.isDir ? 'DIR' : getExt(f.name)) + '</span>' +
+        '<span class="file-name" title="' + f.path + '">' + f.name + '</span>' +
+        '<span class="file-sz">' + fmtSize(f.size) + '</span>' +
+        '<button class="btn-rm" onclick="removeFile(' + i + ')">✕</button>' +
+        '</div>'
+      ).join('');
+
+      const nonDirs = files.filter(f => !f.isDir);
+      entrySelect.innerHTML =
+        '<option value="">— ¿Qué archivo se ejecuta primero? —</option>' +
+        nonDirs.map(f => {
+          const i = files.indexOf(f);
+          return '<option value="' + i + '">' + f.name + '</option>';
+        }).join('');
+
+      const exeIdx = files.findIndex(f => f.name.endsWith('.exe'));
+      if (exeIdx >= 0) entrySelect.value = String(exeIdx);
+    }
+
+    const totalBytes = files.reduce((s, f) => s + (f.size || 0), 0);
+    $('stFiles').textContent  = files.length;
+    $('stSize').textContent   = (totalBytes / 1048576).toFixed(1);
+    $('stEst').textContent    = ((totalBytes * 0.6 + 51200) / 1048576).toFixed(1);
+    packBtn.disabled = files.length === 0;
+  }
+
+  async function startPack() {
+    const name    = $('cfgName').value.trim() || 'MiApp';
+    const ver     = $('cfgVer').value.trim()  || '1.0.0';
+    const outName = $('cfgOut').value.trim()  || name.toLowerCase().replace(/\s+/g,'-') + '-portable.exe';
+    const entryIdx = $('entrySelect').value;
+    if (!entryIdx) { showToast('⚠ Selecciona el archivo de entrada', 'err'); return; }
+
+    const savePath = await save({
+      title: 'Guardar ejecutable portable',
+      defaultPath: outName,
+      filters: [{ name: 'Ejecutable', extensions: ['exe'] }]
+    });
+    if (!savePath) return;
+
+    $('packBtn').disabled = true;
+    $('progWrap').classList.add('show');
+    $('progBar').style.width = '0%';
+    $('stFinal').textContent = '...';
+    addLog('Iniciando empaquetado de "' + name + ' v' + ver + '"', 'inf');
+
+    try {
+      const result = await invoke('pack_to_exe', {
+        config: {
+          files: files.map(f => f.path),
+          output_path: savePath,
+          app_name: name,
+          app_version: ver,
+          entry_point: files[parseInt(entryIdx)].name,
         }
-        render();
-      } catch (e) { log('▸ Error: ' + e, 'err'); }
-    }
-
-    async function pickFolder() {
-      try {
-        const selected = await open({ directory: true, multiple: false, title: 'Seleccionar carpeta' });
-        if (!selected) return;
-        const name = selected.replace(/\\/g, '/').split('/').pop();
-        await addEntry({ name: name + '/', path: selected, size: 0, isDir: true });
-        render();
-      } catch (e) { log('▸ Error: ' + e, 'err'); }
-    }
-
-    async function addEntry(entry) {
-      if (!files.find(x => x.path === entry.path)) {
-        // Obtener tamaño real desde Rust
-        try {
-          const size = await invoke('get_file_size', { path: entry.path });
-          entry.size = size;
-        } catch(_) {}
-        files.push(entry);
-        log('▸ Añadido: ' + entry.name + ' (' + fmtSize(entry.size) + ')', 'inf');
-      }
-    }
-
-    window.removeFile = function(i) {
-      log('▸ Eliminado: ' + files[i].name, '');
-      files.splice(i, 1);
-      render();
-    };
-
-    function render() {
-      if (files.length === 0) {
-        fileList.innerHTML = '<div class="empty-state">Sin archivos todavía...</div>';
-        entrySelect.innerHTML = '<option value="">— ¿Qué archivo se ejecuta primero? —</option>';
-      } else {
-        fileList.innerHTML = files.map((f, i) =>
-          '<div class="file-row">' +
-          '<span class="ext-badge">' + (f.isDir ? 'DIR' : getExt(f.name)) + '</span>' +
-          '<span class="file-name" title="' + f.path + '">' + f.name + '</span>' +
-          '<span class="file-sz">' + (f.size ? fmtSize(f.size) : '—') + '</span>' +
-          '<button class="btn-rm" onclick="removeFile(' + i + ')">✕</button>' +
-          '</div>'
-        ).join('');
-
-        const nonDirs = files.filter(f => !f.isDir);
-        entrySelect.innerHTML =
-          '<option value="">— ¿Qué archivo se ejecuta primero? —</option>' +
-          nonDirs.map(f => {
-            const i = files.indexOf(f);
-            return '<option value="' + i + '">' + f.name + '</option>';
-          }).join('');
-
-        const exeIdx = files.findIndex(f => f.name.endsWith('.exe'));
-        if (exeIdx >= 0) entrySelect.value = String(exeIdx);
-      }
-
-      const totalBytes = files.reduce((s, f) => s + (f.size || 0), 0);
-      document.getElementById('stFiles').textContent = files.length;
-      document.getElementById('stSize').textContent = (totalBytes / 1048576).toFixed(1);
-
-      // Estimado del .exe final (~60% compresión + ~50KB overhead stub)
-      const estimated = Math.max(totalBytes * 0.6 + 51200, 51200);
-      document.getElementById('stEstimated').textContent = (estimated / 1048576).toFixed(1);
-
-      packBtn.disabled = files.length === 0;
-    }
-
-    async function startPack() {
-      const name    = document.getElementById('cfgName').value.trim() || 'MiApp';
-      const ver     = document.getElementById('cfgVer').value.trim()  || '1.0.0';
-      const outName = document.getElementById('cfgOut').value.trim()  ||
-                      name.toLowerCase().replace(/\s+/g, '-') + '-portable.exe';
-      const entryIdx = entrySelect.value;
-      if (entryIdx === '') { toast('⚠ Selecciona el archivo de entrada', 'err'); return; }
-
-      const savePath = await save({
-        title: 'Guardar ejecutable portable',
-        defaultPath: outName,
-        filters: [{ name: 'Ejecutable', extensions: ['exe'] }]
       });
-      if (!savePath) return;
-
-      packBtn.disabled = true;
-      document.getElementById('progWrap').classList.add('show');
-      document.getElementById('progBar').style.width = '0%';
-      log('▸ Iniciando empaquetado de "' + name + ' v' + ver + '"...', 'inf');
-
-      try {
-        const result = await invoke('pack_to_exe', {
-          config: {
-            files: files.map(f => f.path),
-            output_path: savePath,
-            app_name: name,
-            app_version: ver,
-            entry_point: files[parseInt(entryIdx)].name,
-          }
-        });
-
-        document.getElementById('progBar').style.width = '100%';
-        document.getElementById('stFinalSize').textContent = fmtSize(result.size_bytes);
-        log('▸ ✅ ' + result.message, 'ok');
-        toast('✅ ¡Listo! ' + fmtSize(result.size_bytes), 'ok');
-
-      } catch (err) {
-        document.getElementById('progBar').style.width = '0%';
-        document.getElementById('progMsg').textContent = '▸ Error al empaquetar';
-        log('▸ Error: ' + err, 'err');
-        toast('❌ Error: ' + err, 'err');
-      }
-
-      packBtn.disabled = false;
+      $('progBar').style.width = '100%';
+      $('stFinal').textContent = fmtSize(result.size_bytes);
+      addLog('✅ ' + result.message, 'ok');
+      showToast('✅ Listo — ' + fmtSize(result.size_bytes), 'ok');
+    } catch (err) {
+      $('progBar').style.width = '0%';
+      $('progMsg').textContent = 'Error al empaquetar';
+      addLog('Error: ' + err, 'err');
+      showToast('❌ ' + err, 'err');
     }
 
-    function log(msg, type) {
-      const el = document.createElement('div');
-      el.className = 'log-line ' + (type || '');
-      el.textContent = msg;
-      logBox.appendChild(el);
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-    function toast(msg, type) {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.className = 'toast ' + type + ' show';
-      setTimeout(() => t.className = 'toast', 4000);
-    }
-    function fmtSize(b) {
-      if (!b || b < 1024) return (b || 0) + ' B';
-      if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-      return (b/1048576).toFixed(1) + ' MB';
-    }
-    function getExt(name) {
-      const p = name.split('.'); return p.length > 1 ? p.pop().toUpperCase().slice(0,5) : 'FILE';
-    }
+    $('packBtn').disabled = false;
+  }
 
-  }); // DOMContentLoaded
+  // ── Helpers
+  function addLog(msg, type) {
+    const logBox = $('logBox');
+    const el = document.createElement('div');
+    el.className = 'log-line ' + (type || '');
+    el.textContent = '▸ ' + msg;
+    logBox.appendChild(el);
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+  function showToast(msg, type) {
+    const t = $('toast');
+    t.textContent = msg; t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.className = 'toast', 4000);
+  }
+  function fmtSize(b) {
+    if (!b || b < 1024) return (b||0) + ' B';
+    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+  }
+  function getExt(name) {
+    const p = name.split('.'); return p.length > 1 ? p.pop().toUpperCase().slice(0,5) : 'FILE';
+  }
 </script>
