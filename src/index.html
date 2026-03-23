@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fluxi — by Fluxionics</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg:#070809;--surface:#0d0f12;--surface2:#13161b;
@@ -129,13 +129,110 @@
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .toast.ok{border-color:var(--success);color:var(--success)}
     .toast.err{border-color:var(--danger);color:var(--danger)}
+
+    /* ══════════ SPLASH SCREEN ══════════ */
+    .splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #070809;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .splash.hide {
+      opacity: 0; pointer-events: none; transform: scale(1.04);
+    }
+
+    /* Pixel art grid background */
+    .splash::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(79,255,176,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,255,176,0.04) 1px, transparent 1px);
+      background-size: 8px 8px;
+      image-rendering: pixelated;
+    }
+
+    .splash-logo {
+      width: 80px; height: 80px;
+      image-rendering: pixelated;
+      position: relative; z-index: 1;
+      animation: pixelIn 0.4s steps(4) both;
+      filter: drop-shadow(0 0 20px rgba(79,255,176,0.4));
+    }
+
+    @keyframes pixelIn {
+      0%   { opacity: 0; transform: scale(0.5); filter: blur(8px) drop-shadow(0 0 0px transparent); }
+      50%  { opacity: 0.5; transform: scale(1.1); }
+      100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 20px rgba(79,255,176,0.4)); }
+    }
+
+    .splash-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 28px; color: var(--accent);
+      letter-spacing: 4px;
+      position: relative; z-index: 1;
+      margin-top: 20px;
+      text-shadow: 4px 4px 0 rgba(79,255,176,0.15), 0 0 30px rgba(79,255,176,0.3);
+      animation: pixelIn 0.4s steps(4) 0.2s both;
+    }
+
+    .splash-brand {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px; color: var(--muted2);
+      letter-spacing: 3px; text-transform: uppercase;
+      position: relative; z-index: 1;
+      margin-top: 10px;
+      animation: pixelIn 0.4s steps(4) 0.4s both;
+    }
+
+    .splash-loading {
+      position: relative; z-index: 1;
+      margin-top: 40px;
+      display: flex; gap: 6px;
+    }
+
+    .splash-dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      image-rendering: pixelated;
+      animation: pixelBlink 0.8s steps(1) infinite;
+    }
+    .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+    .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+    .splash-dot:nth-child(4) { animation-delay: 0.6s; }
+
+    @keyframes pixelBlink {
+      0%, 100% { opacity: 1; background: var(--accent); }
+      50% { opacity: 0.2; background: var(--muted); }
+    }
+
+    .splash-version {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px; color: var(--muted);
+      position: absolute; bottom: 20px;
+      z-index: 1; letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
+<div class="splash" id="splash">
+  <img class="splash-logo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAgACADASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAcIAwb/xAAoEAABAwMDAwMFAAAAAAAAAAABAgMEAAURBgchEhNBFSIxUWGEs9L/xAAYAQADAQEAAAAAAAAAAAAAAAABAgMEBf/EACMRAAAEBgIDAQAAAAAAAAAAAAECBBEAAwUSEyExYUFR0XH/2gAMAwEAAhEDEQA/AIyorsNmUde5VqT9e9+ldO1m8tSLz6ULVdW3e860pa4wCEJQMh1Rzw2shQQrHuKVDxXFqNWMjm4yy7tPy3vrqNidIE4twmbbcRMVFVTcLZHlsLjymGn2V46m3GwpKsHIyDx84qfty9Ow9MX1mBCdkONuRkvEvKBVkqUPAHHtFLTa2RafGJbR/X+QVKI0kLncI32blw4O5FqlT5TEWMjvdbrzgQhOWVgZJ4HJAp4MDbOPc0XNi9WREtEl+Ulz1VJw68kJcVgrxyAOMYHjFTBRVF9JBZNyZBLpteefsBOrwlttAdvFXu6k0mScansp/Pa/qkhvtNt8/V0V62zo0xkQEJK2HUuJCu44cZSTzgjj70v6KlT6HLRTspTiMMoXGnEtEGj/2Q==" alt="Fluxionics" />
+  <div class="splash-name">FLUXI</div>
+  <div class="splash-brand">by Fluxionics</div>
+  <div class="splash-loading">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+  </div>
+  <div class="splash-version">v1.0.0 — Apache 2.0</div>
+</div>
 <div class="app">
   <header>
     <div class="logo">
-      <div class="logo-mark">📦</div>
+      <img class="logo-mark" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAgACADASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAcIAwb/xAAoEAABAwMDAwMFAAAAAAAAAAABAgMEAAURBgchEhNBFSIxUWGEs9L/xAAYAQADAQEAAAAAAAAAAAAAAAABAgMEBf/EACMRAAAEBgIDAQAAAAAAAAAAAAECBBEAAwUSEyExYUFR0XH/2gAMAwEAAhEDEQA/AIyorsNmUde5VqT9e9+ldO1m8tSLz6ULVdW3e860pa4wCEJQMh1Rzw2shQQrHuKVDxXFqNWMjm4yy7tPy3vrqNidIE4twmbbcRMVFVTcLZHlsLjymGn2V46m3GwpKsHIyDx84qfty9Ow9MX1mBCdkONuRkvEvKBVkqUPAHHtFLTa2RafGJbR/X+QVKI0kLncI32blw4O5FqlT5TEWMjvdbrzgQhOWVgZJ4HJAp4MDbOPc0XNi9WREtEl+Ulz1VJw68kJcVgrxyAOMYHjFTBRVF9JBZNyZBLpteefsBOrwlttAdvFXu6k0mScansp/Pa/qkhvtNt8/V0V62zo0xkQEJK2HUuJCu44cZSTzgjj70v6KlT6HLRTspTiMMoXGnEtEGj/2Q==" style="object-fit:cover;border-radius:7px;" alt="Fluxionics" />
       <div class="logo-label">
         <span class="logo-name">Fluxi</span>
         <span class="logo-by">by Fluxionics</span>
@@ -245,6 +342,15 @@
   import { invoke } from 'https://unpkg.com/@tauri-apps/api@1/tauri';
   import { open, save } from 'https://unpkg.com/@tauri-apps/api@1/dialog';
   import { listen } from 'https://unpkg.com/@tauri-apps/api@1/event';
+
+  // ── Splash screen
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('hide');
+      setTimeout(() => splash.remove(), 700);
+    }
+  }, 2200);
 
   // ── State
   let files = [];
