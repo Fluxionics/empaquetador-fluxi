@@ -1,4 +1,4 @@
-# ![Fluxi](src-tauri/icons/logotipo.png) Fluxi
+# ![Fluxi](https://raw.githubusercontent.com/Fluxionics/empaquetador-fluxi/main/src-tauri/icons/logotipo.png) Fluxi
 
 > **by Fluxionics** — Empaquetador portable de aplicaciones
 
@@ -30,7 +30,7 @@ Tienes dos opciones:
 
 ### 📦 Empaquetar
 
-![Compilar](src-tauri/icons/capturas/compilar.png)
+![Compilar](https://raw.githubusercontent.com/Fluxionics/empaquetador-fluxi/main/src-tauri/icons/capturas/compilar.png)
 
 1. Abre `Fluxi.exe`
 2. Arrastra tus archivos o usa **[ ARCHIVOS ]** / **[ CARPETA ]**
@@ -44,7 +44,7 @@ Tienes dos opciones:
 
 ### 📂 Extraer
 
-![Extraer](src-tauri/icons/capturas/extraer.png)
+![Extraer](https://raw.githubusercontent.com/Fluxionics/empaquetador-fluxi/main/src-tauri/icons/capturas/extraer.png)
 
 Si tienes un `.exe` empaquetado con Fluxi y quieres recuperar los archivos originales:
 
@@ -72,8 +72,7 @@ Si tienes un `.exe` empaquetado con Fluxi y quieres recuperar los archivos origi
 
 Si quieres compilar Fluxi desde el código fuente, consulta [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**¿Puedo empaquetar juegos grandes?**  
-Sí, Fluxi soporta proyectos de 32GB o más sin problema.
+---
 
 ## ❓ Preguntas frecuentes
 
@@ -95,4 +94,5 @@ Sí, usa la pestaña **[ EXTRAER ]** dentro de Fluxi.
 
 Apache 2.0 © 2025 **Fluxionics**
 
-> "Fluxi" y "Fluxionics" son marcas de Fluxionics.
+> "Fluxi" y "Fluxionics" son marcas de Fluxionics.  
+> No uses estos nombres en productos derivados sin permiso.
