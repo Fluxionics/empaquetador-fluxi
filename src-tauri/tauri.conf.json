@@ -20,7 +20,11 @@
       },
       "fs": {
         "all": true,
-        "scope": ["**"]
+        "scope": ["**"],
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "metadata": true
       }
     },
     "bundle": {
@@ -47,7 +51,8 @@
         "height": 640,
         "minWidth": 860,
         "minHeight": 600,
-        "center": true
+        "center": true,
+        "fileDropEnabled": true
       }
     ]
   }
