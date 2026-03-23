@@ -234,16 +234,18 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const { invoke } = window.__TAURI__.tauri;
+  // Tauri v1 — APIs disponibles en window.__TAURI__ directamente
+  const invoke = window.__TAURI__.invoke;
   const { open, save } = window.__TAURI__.dialog;
 
-  let files = [];
-
+  // Elements — declarados primero para evitar errores de referencia
   const dropzone    = document.getElementById('dropzone');
   const fileList    = document.getElementById('fileList');
   const entrySelect = document.getElementById('entrySelect');
   const packBtn     = document.getElementById('packBtn');
   const logBox      = document.getElementById('logBox');
+
+  let files = [];
 
   // Drag & Drop
   dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('over'); });
