@@ -24,6 +24,7 @@ pub struct PackConfig {
     pub entry_point: String,
     pub password:    Option<String>,  // None = sin contraseña
     pub encrypt:     bool,            // cifrado XOR simple del payload
+    pub icon_path:   Option<String>,  // ícono personalizado para el .exe
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

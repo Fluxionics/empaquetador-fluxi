@@ -37,7 +37,7 @@
         "timestampUrl": ""
       }
     },
-    "security": { "csp": null },
+    "security": { "csp": "default-src 'self' https://unpkg.com; script-src 'self' https://unpkg.com 'unsafe-inline'" },
     "windows": [
       {
         "fullscreen": false,
