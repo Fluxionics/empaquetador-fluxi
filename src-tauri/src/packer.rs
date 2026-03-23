@@ -80,6 +80,24 @@ pub fn get_file_info(path: String) -> Result<Vec<FileInfo>, String> {
     Ok(entries)
 }
 
+
+#[tauri::command]
+pub fn get_file_size(path: String) -> u64 {
+    let p = Path::new(&path);
+    if p.is_file() {
+        fs::metadata(p).map(|m| m.len()).unwrap_or(0)
+    } else if p.is_dir() {
+        WalkDir::new(p)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().is_file())
+            .map(|e| e.metadata().map(|m| m.len()).unwrap_or(0))
+            .sum()
+    } else {
+        0
+    }
+}
+
 #[tauri::command]
 pub async fn pack_to_exe(window: Window, config: PackConfig) -> Result<PackResult, String> {
     emit_progress(&window, 5, "Validando archivos...", "");

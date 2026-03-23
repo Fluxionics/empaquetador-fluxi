@@ -275,7 +275,9 @@
     dropzone.addEventListener('drop', e => {
       e.preventDefault();
       dropzone.classList.remove('over');
-      Array.from(e.dataTransfer.files).forEach(f => addEntry({ name: f.name, path: f.path, size: f.size }));
+      for (const f of Array.from(e.dataTransfer.files)) {
+        await addEntry({ name: f.name, path: f.path, size: f.size });
+      }
       render();
     });
 
@@ -284,10 +286,10 @@
         const selected = await open({ multiple: true, title: 'Seleccionar archivos' });
         if (!selected) return;
         const paths = Array.isArray(selected) ? selected : [selected];
-        paths.forEach(p => {
+        for (const p of paths) {
           const name = p.replace(/\\/g, '/').split('/').pop();
-          addEntry({ name, path: p, size: 0 });
-        });
+          await addEntry({ name, path: p, size: 0 });
+        }
         render();
       } catch (e) { log('▸ Error: ' + e, 'err'); }
     }
@@ -297,15 +299,20 @@
         const selected = await open({ directory: true, multiple: false, title: 'Seleccionar carpeta' });
         if (!selected) return;
         const name = selected.replace(/\\/g, '/').split('/').pop();
-        addEntry({ name: name + '/', path: selected, size: 0, isDir: true });
+        await addEntry({ name: name + '/', path: selected, size: 0, isDir: true });
         render();
       } catch (e) { log('▸ Error: ' + e, 'err'); }
     }
 
-    function addEntry(entry) {
+    async function addEntry(entry) {
       if (!files.find(x => x.path === entry.path)) {
+        // Obtener tamaño real desde Rust
+        try {
+          const size = await invoke('get_file_size', { path: entry.path });
+          entry.size = size;
+        } catch(_) {}
         files.push(entry);
-        log('▸ Añadido: ' + entry.name, 'inf');
+        log('▸ Añadido: ' + entry.name + ' (' + fmtSize(entry.size) + ')', 'inf');
       }
     }
 
