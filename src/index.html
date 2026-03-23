@@ -94,7 +94,7 @@
       outline:none;width:100%;transition:border-color .2s}
     .input-styled:focus{border-color:var(--accent)}
     .input-styled::placeholder{color:var(--muted)}
-    .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
     .stat{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
     .stat-val{font-size:22px;font-weight:700;color:var(--accent);font-family:var(--mono);line-height:1}
     .stat-lbl{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px}
@@ -158,8 +158,8 @@
           <div class="dz-title">Arrastra archivos aquí</div>
           <div class="dz-sub">.exe · .dll · carpetas · setup · cualquier archivo</div>
           <div class="dz-btns">
-            <button class="btn-outline" onclick="pickFiles()">Seleccionar archivos</button>
-            <button class="btn-outline" onclick="pickFolder()">Seleccionar carpeta</button>
+            <button class="btn-outline" id="btnFiles">Seleccionar archivos</button>
+            <button class="btn-outline" id="btnFolder">Seleccionar carpeta</button>
           </div>
         </div>
       </section>
@@ -205,7 +205,15 @@
           </div>
           <div class="stat">
             <div class="stat-val" id="stSize">0</div>
-            <div class="stat-lbl">MB Total</div>
+            <div class="stat-lbl">MB origen</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" id="stEstimated">0</div>
+            <div class="stat-lbl">MB estimado</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" id="stFinalSize">—</div>
+            <div class="stat-lbl">MB final</div>
           </div>
         </div>
       </section>
@@ -228,193 +236,188 @@
 
   <footer>
     <div class="footer-info">© 2025 <span>Fluxionics</span> — Open Source</div>
-    <button class="btn-pack" id="packBtn" disabled onclick="startPack()">⚡ Empaquetar</button>
+    <button class="btn-pack" id="packBtn" disabled id="btnPackInner">⚡ Empaquetar</button>
   </footer>
 </div>
 <div class="toast" id="toast"></div>
 
-<script>
-  // Tauri v1 — APIs disponibles en window.__TAURI__ directamente
-  const invoke = window.__TAURI__.invoke;
-  const { open, save } = window.__TAURI__.dialog;
+<script type="module">
+  import { invoke } from 'https://unpkg.com/@tauri-apps/api@1/tauri';
+  import { open, save } from 'https://unpkg.com/@tauri-apps/api@1/dialog';
+  import { listen } from 'https://unpkg.com/@tauri-apps/api@1/event';
 
-  // Elements — declarados primero para evitar errores de referencia
-  const dropzone    = document.getElementById('dropzone');
-  const fileList    = document.getElementById('fileList');
-  const entrySelect = document.getElementById('entrySelect');
-  const packBtn     = document.getElementById('packBtn');
-  const logBox      = document.getElementById('logBox');
+  document.addEventListener('DOMContentLoaded', async () => {
 
-  let files = [];
+    const dropzone    = document.getElementById('dropzone');
+    const fileList    = document.getElementById('fileList');
+    const entrySelect = document.getElementById('entrySelect');
+    const packBtn     = document.getElementById('packBtn');
+    const logBox      = document.getElementById('logBox');
 
-  // Drag & Drop
-  dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('over'); });
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzone.classList.remove('over');
-    Array.from(e.dataTransfer.files).forEach(f => {
-      addEntry({ name: f.name, path: f.path, size: f.size });
+    let files = [];
+
+    // ── Escuchar progreso real desde Rust
+    await listen('pack_progress', (event) => {
+      const { percent, message, current_file } = event.payload;
+      document.getElementById('progBar').style.width = percent + '%';
+      document.getElementById('progMsg').textContent = message;
+      if (current_file) log('▸ ' + message + (current_file ? ' — ' + current_file : ''), 'inf');
     });
-    render();
-  });
 
-  // Seleccionar archivos — diálogo nativo Tauri
-  async function pickFiles() {
-    try {
-      const selected = await open({ multiple: true, title: 'Seleccionar archivos' });
-      if (!selected) return;
-      const paths = Array.isArray(selected) ? selected : [selected];
-      paths.forEach(p => {
-        const name = p.replace(/\\/g, '/').split('/').pop();
-        addEntry({ name, path: p, size: 0 });
-      });
+    // ── Bind botones
+    document.getElementById('btnFiles').addEventListener('click', pickFiles);
+    document.getElementById('btnFolder').addEventListener('click', pickFolder);
+    packBtn.addEventListener('click', startPack);
+
+    // ── Drag & Drop
+    dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('over'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('over');
+      Array.from(e.dataTransfer.files).forEach(f => addEntry({ name: f.name, path: f.path, size: f.size }));
       render();
-    } catch (e) {
-      log('▸ Error abriendo diálogo: ' + e, 'err');
-    }
-  }
-
-  // Seleccionar carpeta — diálogo nativo Tauri
-  async function pickFolder() {
-    try {
-      const selected = await open({ directory: true, multiple: false, title: 'Seleccionar carpeta' });
-      if (!selected) return;
-      const name = selected.replace(/\\/g, '/').split('/').pop();
-      addEntry({ name: name + '/', path: selected, size: 0, isDir: true });
-      render();
-    } catch (e) {
-      log('▸ Error abriendo diálogo: ' + e, 'err');
-    }
-  }
-
-  function addEntry(entry) {
-    if (!files.find(x => x.path === entry.path)) {
-      files.push(entry);
-      log('▸ Añadido: ' + entry.name, 'inf');
-    }
-  }
-
-  function removeFile(i) {
-    log('▸ Eliminado: ' + files[i].name, '');
-    files.splice(i, 1);
-    render();
-  }
-
-  function render() {
-    if (files.length === 0) {
-      fileList.innerHTML = '<div class="empty-state">Sin archivos todavía...</div>';
-      entrySelect.innerHTML = '<option value="">— ¿Qué archivo se ejecuta primero? —</option>';
-    } else {
-      fileList.innerHTML = files.map((f, i) =>
-        '<div class="file-row">' +
-        '<span class="ext-badge">' + (f.isDir ? 'DIR' : getExt(f.name)) + '</span>' +
-        '<span class="file-name" title="' + f.path + '">' + f.name + '</span>' +
-        '<span class="file-sz">' + (f.size ? fmtSize(f.size) : '—') + '</span>' +
-        '<button class="btn-rm" onclick="removeFile(' + i + ')">✕</button>' +
-        '</div>'
-      ).join('');
-
-      const nonDirs = files.filter(f => !f.isDir);
-      entrySelect.innerHTML =
-        '<option value="">— ¿Qué archivo se ejecuta primero? —</option>' +
-        nonDirs.map(f => {
-          const i = files.indexOf(f);
-          return '<option value="' + i + '">' + f.name + '</option>';
-        }).join('');
-
-      const exeIdx = files.findIndex(f => f.name.endsWith('.exe'));
-      if (exeIdx >= 0) entrySelect.value = String(exeIdx);
-    }
-
-    document.getElementById('stFiles').textContent = files.length;
-    document.getElementById('stSize').textContent =
-      (files.reduce((s, f) => s + (f.size || 0), 0) / 1048576).toFixed(1);
-    packBtn.disabled = files.length === 0;
-  }
-
-  async function startPack() {
-    const name    = document.getElementById('cfgName').value.trim() || 'MiApp';
-    const ver     = document.getElementById('cfgVer').value.trim()  || '1.0.0';
-    const outName = document.getElementById('cfgOut').value.trim()  ||
-                    name.toLowerCase().replace(/\s+/g, '-') + '-portable.exe';
-    const entryIdx = entrySelect.value;
-
-    if (entryIdx === '') { toast('⚠ Selecciona el archivo de entrada', 'err'); return; }
-
-    const savePath = await save({
-      title: 'Guardar ejecutable portable',
-      defaultPath: outName,
-      filters: [{ name: 'Ejecutable', extensions: ['exe'] }]
     });
-    if (!savePath) return;
 
-    packBtn.disabled = true;
-    setProgress(true);
-    log('▸ Empaquetando "' + name + ' v' + ver + '"...', 'inf');
-
-    const steps = [
-      { pct: 15, msg: '▸ Validando archivos...' },
-      { pct: 35, msg: '▸ Comprimiendo payload ZIP...' },
-      { pct: 60, msg: '▸ Generando stub launcher...' },
-      { pct: 80, msg: '▸ Incrustando firma Fluxionics...' },
-      { pct: 92, msg: '▸ Escribiendo ' + outName + '...' },
-    ];
-
-    for (const s of steps) {
-      await sleep(300 + Math.random() * 200);
-      setBar(s.pct, s.msg);
-      log(s.msg, 'inf');
+    async function pickFiles() {
+      try {
+        const selected = await open({ multiple: true, title: 'Seleccionar archivos' });
+        if (!selected) return;
+        const paths = Array.isArray(selected) ? selected : [selected];
+        paths.forEach(p => {
+          const name = p.replace(/\\/g, '/').split('/').pop();
+          addEntry({ name, path: p, size: 0 });
+        });
+        render();
+      } catch (e) { log('▸ Error: ' + e, 'err'); }
     }
 
-    try {
-      const result = await invoke('pack_to_exe', {
-        config: {
-          files: files.map(f => f.path),
-          output_path: savePath,
-          app_name: name,
-          app_version: ver,
-          entry_point: files[parseInt(entryIdx)].name,
-        }
+    async function pickFolder() {
+      try {
+        const selected = await open({ directory: true, multiple: false, title: 'Seleccionar carpeta' });
+        if (!selected) return;
+        const name = selected.replace(/\\/g, '/').split('/').pop();
+        addEntry({ name: name + '/', path: selected, size: 0, isDir: true });
+        render();
+      } catch (e) { log('▸ Error: ' + e, 'err'); }
+    }
+
+    function addEntry(entry) {
+      if (!files.find(x => x.path === entry.path)) {
+        files.push(entry);
+        log('▸ Añadido: ' + entry.name, 'inf');
+      }
+    }
+
+    window.removeFile = function(i) {
+      log('▸ Eliminado: ' + files[i].name, '');
+      files.splice(i, 1);
+      render();
+    };
+
+    function render() {
+      if (files.length === 0) {
+        fileList.innerHTML = '<div class="empty-state">Sin archivos todavía...</div>';
+        entrySelect.innerHTML = '<option value="">— ¿Qué archivo se ejecuta primero? —</option>';
+      } else {
+        fileList.innerHTML = files.map((f, i) =>
+          '<div class="file-row">' +
+          '<span class="ext-badge">' + (f.isDir ? 'DIR' : getExt(f.name)) + '</span>' +
+          '<span class="file-name" title="' + f.path + '">' + f.name + '</span>' +
+          '<span class="file-sz">' + (f.size ? fmtSize(f.size) : '—') + '</span>' +
+          '<button class="btn-rm" onclick="removeFile(' + i + ')">✕</button>' +
+          '</div>'
+        ).join('');
+
+        const nonDirs = files.filter(f => !f.isDir);
+        entrySelect.innerHTML =
+          '<option value="">— ¿Qué archivo se ejecuta primero? —</option>' +
+          nonDirs.map(f => {
+            const i = files.indexOf(f);
+            return '<option value="' + i + '">' + f.name + '</option>';
+          }).join('');
+
+        const exeIdx = files.findIndex(f => f.name.endsWith('.exe'));
+        if (exeIdx >= 0) entrySelect.value = String(exeIdx);
+      }
+
+      const totalBytes = files.reduce((s, f) => s + (f.size || 0), 0);
+      document.getElementById('stFiles').textContent = files.length;
+      document.getElementById('stSize').textContent = (totalBytes / 1048576).toFixed(1);
+
+      // Estimado del .exe final (~60% compresión + ~50KB overhead stub)
+      const estimated = Math.max(totalBytes * 0.6 + 51200, 51200);
+      document.getElementById('stEstimated').textContent = (estimated / 1048576).toFixed(1);
+
+      packBtn.disabled = files.length === 0;
+    }
+
+    async function startPack() {
+      const name    = document.getElementById('cfgName').value.trim() || 'MiApp';
+      const ver     = document.getElementById('cfgVer').value.trim()  || '1.0.0';
+      const outName = document.getElementById('cfgOut').value.trim()  ||
+                      name.toLowerCase().replace(/\s+/g, '-') + '-portable.exe';
+      const entryIdx = entrySelect.value;
+      if (entryIdx === '') { toast('⚠ Selecciona el archivo de entrada', 'err'); return; }
+
+      const savePath = await save({
+        title: 'Guardar ejecutable portable',
+        defaultPath: outName,
+        filters: [{ name: 'Ejecutable', extensions: ['exe'] }]
       });
-      setBar(100, '▸ ✅ ' + result.output_file.replace(/\\/g,'/').split('/').pop() + ' — ' + fmtSize(result.size_bytes));
-      log('▸ ✅ ' + result.message, 'ok');
-      toast('✅ ¡Empaquetado listo!', 'ok');
-    } catch (err) {
-      setBar(0, '▸ Error');
-      log('▸ Error: ' + err, 'err');
-      toast('❌ Error al empaquetar', 'err');
+      if (!savePath) return;
+
+      packBtn.disabled = true;
+      document.getElementById('progWrap').classList.add('show');
+      document.getElementById('progBar').style.width = '0%';
+      log('▸ Iniciando empaquetado de "' + name + ' v' + ver + '"...', 'inf');
+
+      try {
+        const result = await invoke('pack_to_exe', {
+          config: {
+            files: files.map(f => f.path),
+            output_path: savePath,
+            app_name: name,
+            app_version: ver,
+            entry_point: files[parseInt(entryIdx)].name,
+          }
+        });
+
+        document.getElementById('progBar').style.width = '100%';
+        document.getElementById('stFinalSize').textContent = fmtSize(result.size_bytes);
+        log('▸ ✅ ' + result.message, 'ok');
+        toast('✅ ¡Listo! ' + fmtSize(result.size_bytes), 'ok');
+
+      } catch (err) {
+        document.getElementById('progBar').style.width = '0%';
+        document.getElementById('progMsg').textContent = '▸ Error al empaquetar';
+        log('▸ Error: ' + err, 'err');
+        toast('❌ Error: ' + err, 'err');
+      }
+
+      packBtn.disabled = false;
     }
 
-    packBtn.disabled = false;
-  }
+    function log(msg, type) {
+      const el = document.createElement('div');
+      el.className = 'log-line ' + (type || '');
+      el.textContent = msg;
+      logBox.appendChild(el);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+    function toast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast ' + type + ' show';
+      setTimeout(() => t.className = 'toast', 4000);
+    }
+    function fmtSize(b) {
+      if (!b || b < 1024) return (b || 0) + ' B';
+      if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+      return (b/1048576).toFixed(1) + ' MB';
+    }
+    function getExt(name) {
+      const p = name.split('.'); return p.length > 1 ? p.pop().toUpperCase().slice(0,5) : 'FILE';
+    }
 
-  function setProgress(show) { document.getElementById('progWrap').classList.toggle('show', show); }
-  function setBar(pct, msg) {
-    document.getElementById('progBar').style.width = pct + '%';
-    document.getElementById('progMsg').textContent = msg;
-  }
-  function log(msg, type) {
-    const el = document.createElement('div');
-    el.className = 'log-line ' + (type || '');
-    el.textContent = msg;
-    logBox.appendChild(el);
-    logBox.scrollTop = logBox.scrollHeight;
-  }
-  function toast(msg, type) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.className = 'toast ' + type + ' show';
-    setTimeout(() => t.className = 'toast', 3000);
-  }
-  function fmtSize(b) {
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-    return (b/1048576).toFixed(1) + ' MB';
-  }
-  function getExt(name) {
-    const p = name.split('.'); return p.length > 1 ? p.pop().toUpperCase().slice(0,5) : 'FILE';
-  }
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  }); // DOMContentLoaded
 </script>
-</body>
-</html>
