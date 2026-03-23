@@ -117,7 +117,7 @@ pub async fn unpack_exe(window: Window, config: UnpackConfig) -> Result<UnpackRe
 
     let app_name = metadata["app_name"].as_str().unwrap_or("Unknown").to_string();
     let encrypted = metadata["encrypted"].as_bool().unwrap_or(false);
-    let entry_point = metadata["entry_point"].as_str().unwrap_or("").to_string();
+    let _entry_point = metadata["entry_point"].as_str().unwrap_or("").to_string();
 
     emit(&window, 28, &format!("Extrayendo: {}", app_name), "");
 
