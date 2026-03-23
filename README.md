@@ -1,11 +1,9 @@
-# Fluxi v1.0.0
+# ![Fluxi](src-tauri/icons/logotipo.png) Fluxi
 
-> **by Fluxionics** — Empaquetador portable de aplicaciones  
-> Convierte cualquier programa en un único `.exe` sin instalación.
+> **by Fluxionics** — Empaquetador portable de aplicaciones
 
 ![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
-![Stack](https://img.shields.io/badge/stack-Rust%20%2B%20Tauri%20%2B%20HTML-orange)
 ![Platform](https://img.shields.io/badge/platform-Windows-informational)
 ![ZIP64](https://img.shields.io/badge/ZIP64-32GB%2B-success)
 
@@ -13,166 +11,82 @@
 
 ## ¿Qué es Fluxi?
 
-**Fluxi** es una herramienta open source creada por **Fluxionics** que convierte cualquier programa, instalador o conjunto de archivos en **un único archivo `.exe` portable** — sin carpetas ocultas, sin instalación, sin rastros.
+**Fluxi** convierte cualquier programa, juego o conjunto de archivos en **un único `.exe` portable** que puedes copiar, compartir o ejecutar desde cualquier PC con Windows — sin instalación, sin carpetas ocultas, sin rastros.
 
 ---
 
-## ✨ Características
+## ⬇️ Descarga
 
-- 📦 Empaqueta cualquier archivo o carpeta en un único `.exe`
-- 🚀 Motor streaming — soporta **32GB+** sin congelarse ni usar RAM
-- 🔐 Contraseña de protección al ejecutar
-- 🔒 Cifrado del payload
-- 📂 Extractor integrado — desempaqueta cualquier `.fluxi.exe`
-- 🎨 UI pixel art con tema claro/oscuro
-- 🖼️ Ícono personalizado para el `.exe` generado
-- 📊 Progreso en tiempo real archivo por archivo
-- 🆓 100% Open Source — Apache 2.0
+Tienes dos opciones:
 
----
-
-## 🛠️ Stack tecnológico
-
-| Capa | Tecnología |
-|------|-----------|
-| Interfaz | HTML + CSS + JS (pixel art) |
-| Backend | Rust |
-| Bridge | Tauri v1 |
-| Compresión | ZIP64 / Deflate |
-
----
-
-## 📥 Instalación para desarrollo
-
-### Requisitos
-
-**1. Rust**
-```bash
-# Descarga desde https://rustup.rs/
-rustc --version  # verificar
-```
-
-**2. Node.js v18+**
-```bash
-# Descarga desde https://nodejs.org/
-node --version   # verificar
-```
-
-**3. WebView2 Runtime (Windows)**
-- Descarga el `Evergreen Bootstrapper` desde:
-- https://developer.microsoft.com/en-us/microsoft-edge/webview2/
-
-**4. Microsoft C++ Build Tools**
-- https://visualstudio.microsoft.com/visual-cpp-build-tools/
-- Selecciona: `Desktop development with C++`
-
----
-
-## 🚀 Correr en desarrollo
-
-```bash
-git clone https://github.com/fluxionics/empaquetador-fluxi.git
-cd empaquetador-fluxi
-npm install
-npm run dev
-```
-
----
-
-## 📦 Compilar release
-
-```bash
-# Genera instalador .msi y .exe en Windows
-npm run build
-```
-
-El resultado estará en:
-```
-src-tauri/target/release/bundle/
-├── msi/    ← Fluxi_1.0.0_x64_en-US.msi
-└── nsis/   ← Fluxi_1.0.0_x64-setup.exe
-```
-
-> **Nota:** El `.dmg` para Mac solo se puede compilar desde una Mac.
+| | Opción | Para quién |
+|---|---|---|
+| 🟢 | **[Descargar .exe](../../releases)** | Quiero usarlo directamente |
+| 🔵 | **[Código fuente](../../archive/refs/heads/main.zip)** | Quiero ver cómo funciona o contribuir |
 
 ---
 
 ## 🎯 Cómo usar Fluxi
 
-1. Abre Fluxi
-2. Arrastra tus archivos o usa los botones para seleccionarlos
-3. Selecciona el **archivo principal** (entry point)
-4. Opcionalmente: agrega ícono, contraseña o cifrado
-5. Presiona **[ EMPAQUETAR ]**
-6. Elige dónde guardar el `.exe` portable
-7. ¡Listo! Un único `.exe` para compartir
+### 📦 Empaquetar
 
-### Extraer un .fluxi.exe
+![Compilar](src-tauri/icons/capturas/compilar.png)
+
+1. Abre `Fluxi.exe`
+2. Arrastra tus archivos o usa **[ ARCHIVOS ]** / **[ CARPETA ]**
+3. Selecciona el **archivo principal** que se ejecuta al abrir tu portable
+4. Llena el nombre y versión de tu app
+5. Opcionalmente agrega un ícono, contraseña o cifrado
+6. Presiona **[ EMPAQUETAR ]** y elige dónde guardar
+7. ¡Listo! Tienes un único `.exe` para compartir
+
+---
+
+### 📂 Extraer
+
+![Extraer](src-tauri/icons/capturas/extraer.png)
+
+Si tienes un `.exe` empaquetado con Fluxi y quieres recuperar los archivos originales:
+
 1. Ve a la pestaña **[ EXTRAER ]**
 2. Selecciona el `.exe` empaquetado
-3. Elige carpeta de destino
-4. Ingresa contraseña si aplica
+3. Elige la carpeta donde extraer
+4. Si tiene contraseña, ingrésala
 5. Presiona **[ EXTRAER ARCHIVOS ]**
 
 ---
 
-## 📁 Estructura del proyecto
+## ✨ Características
 
-```
-fluxi/
-├── src/
-│   └── index.html              ← UI pixel art completa
-├── src-tauri/
-│   ├── src/
-│   │   ├── main.rs             ← Entrada Rust + Tauri
-│   │   ├── packer.rs           ← Motor de empaquetado ZIP64
-│   │   └── extractor.rs        ← Desempaquetador
-│   ├── icons/
-│   │   ├── icon.ico
-│   │   ├── icon.png
-│   │   └── logotipo.png        ← Logo Fluxionics
-│   ├── build.rs
-│   ├── Cargo.toml
-│   └── tauri.conf.json
-├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── LICENSE                     ← Apache 2.0
-└── README.md
-```
+- 📦 Genera un único `.exe` — sin carpetas, sin instalador
+- 🚀 Soporta archivos de **32GB o más** sin congelarse
+- 🔐 Protección con contraseña al ejecutar
+- 🔒 Cifrado del contenido
+- 📂 Extractor integrado
+- 🎨 Ícono personalizado para tu `.exe`
+- 📊 Progreso en tiempo real
 
 ---
 
-## 🗺️ Roadmap
+## 🔧 Para desarrolladores
 
-- [x] v0.0.1 — Estructura base
-- [x] v1.0.0 — Motor streaming ZIP64, UI pixel art, extractor, contraseña
-- [ ] v1.1.0 — Firma digital del `.exe` generado
-- [ ] v1.2.0 — Soporte Mac/Linux
-- [ ] v1.3.0 — CLI (línea de comandos)
+Si quieres compilar Fluxi desde el código fuente, consulta [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## 🐛 Problemas comunes
+## ❓ Preguntas frecuentes
 
-**`tauri` command not found**
-```bash
-npm install
-```
+**¿El `.exe` generado funciona sin instalar nada?**  
+Sí. Solo necesitas Windows 10 o superior.
 
-**Error de compilación C++**
-Instala Microsoft C++ Build Tools (ver requisitos)
+**¿Puedo empaquetar juegos grandes?**  
+Sí, Fluxi soporta proyectos de 32GB o más sin problema.
 
-**La ventana no abre**
-Verifica WebView2 Runtime instalado
+**¿Qué pasa si pongo contraseña?**  
+Al abrir el `.exe` te pedirá la contraseña antes de ejecutarse.
 
-**Archivo muy grande (>4GB individual)**
-ZIP64 está activado por defecto — debería funcionar automáticamente
-
----
-
-## 🤝 Contribuir
-
-Lee [CONTRIBUTING.md](CONTRIBUTING.md) para guía de contribución.
+**¿Puedo recuperar los archivos originales?**  
+Sí, usa la pestaña **[ EXTRAER ]** dentro de Fluxi.
 
 ---
 
