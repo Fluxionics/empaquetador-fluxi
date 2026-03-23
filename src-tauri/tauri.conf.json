@@ -27,7 +27,7 @@
       "active": true,
       "targets": ["msi", "nsis"],
       "identifier": "com.fluxionics.fluxi",
-      "icon": ["icons/icon.png"],
+      "icon": ["icons/icon.ico", "icons/icon.png", "icons/128x128.png"],
       "copyright": "© 2025 Fluxionics",
       "longDescription": "Empaquetador portable de aplicaciones por Fluxionics",
       "shortDescription": "Empaquetador portable",
